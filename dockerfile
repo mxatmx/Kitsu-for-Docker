@@ -1,17 +1,18 @@
-FROM nginx:alpine as buildStage
-
-USER root
-
+FROM node:18-alpine as buildStage
 WORKDIR /opt
-
-RUN apk add --no-cache --virtual .build-deps git
-
+# Install git to clone the repo
+RUN apk add --no-cache git
 ARG KITSU_VERSION
-
-RUN git clone -b "${KITSU_VERSION}-build" --single-branch --depth 1 https://github.com/mxatmx/kitsu\
-    && apk --purge del .build-deps
-
-FROM nginx:alpine as squashStage
-COPY --from=buildStage / /
-
+# Clone the repository
+RUN git clone -b "${KITSU_VERSION}-build" --single-branch --depth 1 https://github.com/mxatmx/kitsu
+# Build the application
+WORKDIR /opt/kitsu
+RUN npm install
+RUN npm run build
+# Production stage with nginx
+FROM nginx:alpine
+# Copy the built files from the build stage
+COPY --from=buildStage /opt/kitsu/dist /opt/kitsu/dist
+# Copy nginx configuration
 COPY ./nginx.conf /etc/nginx/nginx.conf
+EXPOSE 80
