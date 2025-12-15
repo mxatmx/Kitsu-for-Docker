@@ -1,4 +1,4 @@
-FROM node:18-alpine as buildStage
+FROM node:20-alpine as buildStage
 WORKDIR /opt
 # Install git to clone the repo
 RUN apk add --no-cache git
